@@ -1,0 +1,63 @@
+// PRISMA V6 - SCHEMA COMPLETO
+// ─────────────────────────────────────────────────────────
+// Este schema define 4 modelos con 3 tipos de relaciones:
+//
+//  • Contacto ──1:1──▶ Perfil       (cada contacto tiene UN perfil)
+//  • Contacto ──1:N──▶ Nota         (cada contacto tiene MUCHAS notas)
+//  • Contacto ──N:M──▶ Categoria    (muchos contactos, muchas categorías)
+//
+// Prisma genera automáticamente la tabla intermedia
+// _CategoriaToContacto para la relación N:M.
+// ─────────────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Contacto {
+  id        Int       @id @default(autoincrement())
+  nombre    String  
+  email     String    @unique
+  telefono  String
+  creado    DateTime  @default(now())
+
+  perfil      Perfil?
+  notas       Nota[]
+  categorias  Categoria[]
+}
+
+model Perfil {
+  id        Int       @id @default(autoincrement())
+  direccion String
+  ciudad    String
+  pais      String
+
+  contactoId  Int   @unique
+  contacto Contacto @relation(fields: [contactoId], references: [id], onDelete: Cascade)
+}
+
+// Relación 1:n
+model Nota {
+  id          Int      @id @default(autoincrement())
+  texto   String
+  createdAt   DateTime @default(now())
+
+  contactoId  Int   // Aquí no hay @unique porque pueden haber muchas notas con el mismo contactoId
+  contacto    Contacto @relation(fields: [contactoId], references: [id], onDelete: Cascade)
+}
+
+// ─── RELACIÓN N:M ────────────────────────────────────────
+model Categoria {
+  id     Int    @id @default(autoincrement())
+  nombre String @unique
+  color  String @default("#6366f1") // color hex para la UI
+
+  // Array de Contacto → Prisma gestiona la tabla intermedia
+  contactos Contacto[]
+}
